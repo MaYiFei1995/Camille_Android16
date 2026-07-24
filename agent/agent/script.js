@@ -56,6 +56,28 @@ if (!Array.isArray) {
     };
 }
 
+// 模块配置表(由camille.py通过-mc参数传入)
+var moduleConfig = null;
+
+// 判断检测项是否启用
+function isItemEnabled(moduleName, methodName) {
+    if (!moduleConfig) return true;
+    var module = moduleConfig[moduleName];
+    if (!module) return true;
+    if (module.enabled === false) return false;
+    if (!module.items) return true;
+    var item = module.items[methodName];
+    if (!item) return true;
+    return item.enabled !== false;
+}
+
+// 过滤hook数组，仅保留启用的检测项
+function filterItems(moduleName, items) {
+    return items.filter(function (item) {
+        return isItemEnabled(moduleName, item.methodName);
+    });
+}
+
 // hook方法
 function hookMethod(targetClass, targetMethod, targetArgs, action, messages) {
     try {
@@ -178,20 +200,20 @@ function checkRequestPermission() {
     var action = '申请权限';
 
     //老项目
-    hook('android.support.v4.app.ActivityCompat', [
+    hook('android.support.v4.app.ActivityCompat', filterItems('permission', [
         {'methodName': 'requestPermissions', 'action': action, 'messages': '申请具体权限看"参数1"'}
-    ]);
+    ]));
 
-    hook('androidx.core.app.ActivityCompat', [
+    hook('androidx.core.app.ActivityCompat', filterItems('permission', [
         {'methodName': 'requestPermissions', 'action': action, 'messages': '申请具体权限看"参数1"'}
-    ]);
+    ]));
 }
 
 // 获取电话相关信息
 function getPhoneState() {
     var action = '获取电话相关信息';
 
-    hook('android.telephony.TelephonyManager', [
+    hook('android.telephony.TelephonyManager', filterItems('phone', [
         // Android 8.0
         {'methodName': 'getDeviceId', 'action': action, 'messages': '获取IMEI'},
         // Android 8.1、9   android 10获取不到
@@ -213,29 +235,29 @@ function getPhoneState() {
         {'methodName': 'getAllCellInfo', 'action': action, 'messages': '获取电话当前位置信息'},
         {'methodName': 'requestCellInfoUpdate', 'action': action, 'messages': '获取基站信息'},
         {'methodName': 'getServiceState', 'action': action, 'messages': '获取sim卡是否可用'},
-    ]);
+    ]));
 
     // 电信卡cid lac
-    hook('android.telephony.cdma.CdmaCellLocation', [
+    hook('android.telephony.cdma.CdmaCellLocation', filterItems('phone', [
         {'methodName': 'getBaseStationId', 'action': action, 'messages': '获取基站cid信息'},
         {'methodName': 'getNetworkId', 'action': action, 'messages': '获取基站lac信息'}
-    ]);
+    ]));
 
     // 移动联通卡 cid/lac
-    hook('android.telephony.gsm.GsmCellLocation', [
+    hook('android.telephony.gsm.GsmCellLocation', filterItems('phone', [
         {'methodName': 'getCid', 'action': action, 'messages': '获取基站cid信息'},
         {'methodName': 'getLac', 'action': action, 'messages': '获取基站lac信息'}
-    ]);
+    ]));
 
     // 短信
-    hook('android.telephony.SmsManager', [
+    hook('android.telephony.SmsManager', filterItems('phone', [
         {'methodName': 'sendTextMessageInternal', 'action': action, 'messages': '获取短信信息-发送短信'},
         {'methodName': 'getDefault', 'action': action, 'messages': '获取短信信息-发送短信'},
         {'methodName': 'sendTextMessageWithSelfPermissions', 'action': action, 'messages': '获取短信信息-发送短信'},
         {'methodName': 'sendMultipartTextMessageInternal', 'action': action, 'messages': '获取短信信息-发送短信'},
         {'methodName': 'sendDataMessage', 'action': action, 'messages': '获取短信信息-发送短信'},
         {'methodName': 'sendDataMessageWithSelfPermissions', 'action': action, 'messages': '获取短信信息-发送短信'},
-    ]);
+    ]));
 
 }
 
@@ -243,128 +265,130 @@ function getPhoneState() {
 function getSystemData() {
     var action = '获取系统信息';
 
-    hook('android.provider.Settings$Secure', [
+    hook('android.provider.Settings$Secure', filterItems('system', [
         {'methodName': 'getString', 'args': ['android_id'], 'action': action, 'messages': '获取安卓ID'}
-    ]);
-    hook('android.provider.Settings$System', [
+    ]));
+    hook('android.provider.Settings$System', filterItems('system', [
         {'methodName': 'getString', 'args': ['android_id'], 'action': action, 'messages': '获取安卓ID'}
-    ]);
+    ]));
 
 
-    hook('android.os.Build', [
+    hook('android.os.Build', filterItems('system', [
         {'methodName': 'getSerial', 'action': action, 'messages': '获取设备序列号'},
-    ]);
+    ]));
 
-    hook('android.app.admin.DevicePolicyManager', [
+    hook('android.app.admin.DevicePolicyManager', filterItems('system', [
         {'methodName': 'getWifiMacAddress', 'action': action, 'messages': '获取mac地址'},
-    ]);
+    ]));
 
-    hook('android.content.ClipboardManager', [
+    hook('android.content.ClipboardManager', filterItems('system', [
         {'methodName': 'getPrimaryClip', 'action': action, 'messages': '读取剪切板信息'},
         {'methodName': 'setPrimaryClip', 'action': action, 'messages': '写入剪切板信息'},
-    ]);
+    ]));
 
-    hook('android.telephony.UiccCardInfo', [
+    hook('android.telephony.UiccCardInfo', filterItems('system', [
         {'methodName': 'getIccId', 'action': action, 'messages': '读取手机IccId信息'},
-    ]);
+    ]));
 
     //小米
-    hook('com.android.id.impl.IdProviderImpl', [
+    hook('com.android.id.impl.IdProviderImpl', filterItems('system', [
         {'methodName': 'getUDID', 'action': action, 'messages': '读取小米手机UDID'},
         {'methodName': 'getOAID', 'action': action, 'messages': '读取小米手机OAID'},
         {'methodName': 'getVAID', 'action': action, 'messages': '读取小米手机VAID'},
         {'methodName': 'getAAID', 'action': action, 'messages': '读取小米手机AAID'},
-    ]);
+    ]));
 
     //三星
-    hook('com.samsung.android.deviceidservice.IDeviceIdService$Stub$Proxy', [
+    hook('com.samsung.android.deviceidservice.IDeviceIdService$Stub$Proxy', filterItems('system', [
         {'methodName': 'getOAID', 'action': action, 'messages': '读取三星手机OAID'},
         {'methodName': 'getVAID', 'action': action, 'messages': '读取三星手机VAID'},
         {'methodName': 'getAAID', 'action': action, 'messages': '读取三星手机AAID'},
-    ]);
+    ]));
 
-    hook('repeackage.com.samsung.android.deviceidservice.IDeviceIdService$Stub$Proxy', [
+    hook('repeackage.com.samsung.android.deviceidservice.IDeviceIdService$Stub$Proxy', filterItems('system', [
         {'methodName': 'getOAID', 'action': action, 'messages': '读取三星手机OAID'},
         {'methodName': 'getVAID', 'action': action, 'messages': '读取三星手机VAID'},
         {'methodName': 'getAAID', 'action': action, 'messages': '读取三星手机AAID'},
-    ]);
+    ]));
 
     // MSA SDK (移动安全联盟)
-    hook('com.bun.miitmdid.core.MdidSdkHelper', [
+    hook('com.bun.miitmdid.core.MdidSdkHelper', filterItems('system', [
         {'methodName': 'InitSdk', 'action': action, 'messages': '初始化MSA SDK获取OAID'},
-    ]);
-    hook('com.bun.miitmdid.interfaces.IdSupplier', [
+    ]));
+    hook('com.bun.miitmdid.interfaces.IdSupplier', filterItems('system', [
         {'methodName': 'getOAID', 'action': action, 'messages': '获取OAID(MSA SDK)'},
         {'methodName': 'getVAID', 'action': action, 'messages': '获取VAID(MSA SDK)'},
         {'methodName': 'getAAID', 'action': action, 'messages': '获取AAID(MSA SDK)'},
-    ]);
+    ]));
 
     // DRM设备唯一ID
-    hook('android.media.MediaDrm', [
+    hook('android.media.MediaDrm', filterItems('system', [
         {'methodName': 'getPropertyByteArray', 'args': ['device_unique_id'], 'action': action, 'messages': '获取DRM设备唯一ID'},
-    ]);
+    ]));
 
     // GAID (Google Advertising ID)
-    hook('com.google.android.gms.ads.identifier.AdvertisingIdClient$Info', [
+    hook('com.google.android.gms.ads.identifier.AdvertisingIdClient$Info', filterItems('system', [
         {'methodName': 'getId', 'action': action, 'messages': '获取Google广告ID(GAID)'},
-    ]);
+    ]));
 
     // 账户信息
-    hook('android.accounts.AccountManager', [
+    hook('android.accounts.AccountManager', filterItems('system', [
         {'methodName': 'getAccounts', 'action': action, 'messages': '获取账户列表'},
         {'methodName': 'getAccountsByType', 'action': action, 'messages': '获取指定类型账户'},
-    ]);
+    ]));
 
     //获取content敏感信息
-    try {
-        // 通讯录内容
-        var ContactsContract = Java.use('android.provider.ContactsContract');
-        var contact_authority = ContactsContract.class.getDeclaredField('AUTHORITY').get('java.lang.Object');
-    } catch (e) {
-        console.log(e)
-    }
-    try {
-        // 日历内容
-        var CalendarContract = Java.use('android.provider.CalendarContract');
-        var calendar_authority = CalendarContract.class.getDeclaredField('AUTHORITY').get('java.lang.Object');
-    } catch (e) {
-        console.log(e)
-    }
-    try {
-        // 浏览器内容
-        var BrowserContract = Java.use('android.provider.BrowserContract');
-        var browser_authority = BrowserContract.class.getDeclaredField('AUTHORITY').get('java.lang.Object');
-    } catch (e) {
-        console.log(e)
-    }
-    try {
-        // 相册内容
-        var MediaStore = Java.use('android.provider.MediaStore');
-        var media_authority = MediaStore.class.getDeclaredField('AUTHORITY').get('java.lang.Object');
-    } catch (e) {
-        console.log(e)
-    }
-    try {
-        var ContentResolver = Java.use('android.content.ContentResolver');
-        var queryLength = ContentResolver.query.overloads.length;
-        for (var i = 0; i < queryLength; i++) {
-            ContentResolver.query.overloads[i].implementation = function () {
-                var temp = this.query.apply(this, arguments);
-                if (arguments[0].toString().indexOf(contact_authority) != -1) {
-                    alertSend(action, '获取手机通信录内容', '');
-                } else if (arguments[0].toString().indexOf(calendar_authority) != -1) {
-                    alertSend(action, '获取日历内容', '');
-                } else if (arguments[0].toString().indexOf(browser_authority) != -1) {
-                    alertSend(action, '获取浏览器内容', '');
-                } else if (arguments[0].toString().indexOf(media_authority) != -1) {
-                    alertSend(action, '获取相册内容', '');
-                }
-                return temp;
-            }
+    if (isItemEnabled('system', 'query')) {
+        try {
+            // 通讯录内容
+            var ContactsContract = Java.use('android.provider.ContactsContract');
+            var contact_authority = ContactsContract.class.getDeclaredField('AUTHORITY').get('java.lang.Object');
+        } catch (e) {
+            console.log(e)
         }
-    } catch (e) {
-        console.log(e);
-        return
+        try {
+            // 日历内容
+            var CalendarContract = Java.use('android.provider.CalendarContract');
+            var calendar_authority = CalendarContract.class.getDeclaredField('AUTHORITY').get('java.lang.Object');
+        } catch (e) {
+            console.log(e)
+        }
+        try {
+            // 浏览器内容
+            var BrowserContract = Java.use('android.provider.BrowserContract');
+            var browser_authority = BrowserContract.class.getDeclaredField('AUTHORITY').get('java.lang.Object');
+        } catch (e) {
+            console.log(e)
+        }
+        try {
+            // 相册内容
+            var MediaStore = Java.use('android.provider.MediaStore');
+            var media_authority = MediaStore.class.getDeclaredField('AUTHORITY').get('java.lang.Object');
+        } catch (e) {
+            console.log(e)
+        }
+        try {
+            var ContentResolver = Java.use('android.content.ContentResolver');
+            var queryLength = ContentResolver.query.overloads.length;
+            for (var i = 0; i < queryLength; i++) {
+                ContentResolver.query.overloads[i].implementation = function () {
+                    var temp = this.query.apply(this, arguments);
+                    if (arguments[0].toString().indexOf(contact_authority) != -1) {
+                        alertSend(action, '获取手机通信录内容', '');
+                    } else if (arguments[0].toString().indexOf(calendar_authority) != -1) {
+                        alertSend(action, '获取日历内容', '');
+                    } else if (arguments[0].toString().indexOf(browser_authority) != -1) {
+                        alertSend(action, '获取浏览器内容', '');
+                    } else if (arguments[0].toString().indexOf(media_authority) != -1) {
+                        alertSend(action, '获取相册内容', '');
+                    }
+                    return temp;
+                }
+            }
+        } catch (e) {
+            console.log(e);
+            return
+        }
     }
 }
 
@@ -372,32 +396,38 @@ function getSystemData() {
 function getPackageManager() {
     var action = '获取其他app信息';
 
-    hook('android.content.pm.PackageManager', [
+    hook('android.content.pm.PackageManager', filterItems('app', [
         {'methodName': 'getInstalledPackages', 'action': action, 'messages': 'APP获取了其他app信息'},
         {'methodName': 'getInstalledApplications', 'action': action, 'messages': 'APP获取了其他app信息'}
-    ]);
+    ]));
 
-    hook('android.app.ApplicationPackageManager', [
+    hook('android.app.ApplicationPackageManager', filterItems('app', [
         {'methodName': 'getInstalledPackages', 'action': action, 'messages': 'APP获取了其他app信息'},
         {'methodName': 'getInstalledApplications', 'action': action, 'messages': 'APP获取了其他app信息'},
         {'methodName': 'queryIntentActivities', 'action': action, 'messages': 'APP获取了其他app信息'},
-    ]);
+    ]));
 
-    hook('android.app.ActivityManager', [
+    hook('android.app.ActivityManager', filterItems('app', [
         {'methodName': 'getRunningAppProcesses', 'action': action, 'messages': '获取了正在运行的App'},
         {'methodName': 'getRunningServiceControlPanel', 'action': action, 'messages': '获取了正在运行的服务面板'},
-    ]);
+    ]));
     //需排除应用本身
-    hookApplicationPackageManagerExceptSelf('getApplicationInfo', action);
-    hookApplicationPackageManagerExceptSelf('getPackageInfoAsUser', action);
-    hookApplicationPackageManagerExceptSelf('getInstallerPackageName', action);
+    if (isItemEnabled('app', 'getApplicationInfo')) {
+        hookApplicationPackageManagerExceptSelf('getApplicationInfo', action);
+    }
+    if (isItemEnabled('app', 'getPackageInfoAsUser')) {
+        hookApplicationPackageManagerExceptSelf('getPackageInfoAsUser', action);
+    }
+    if (isItemEnabled('app', 'getInstallerPackageName')) {
+        hookApplicationPackageManagerExceptSelf('getInstallerPackageName', action);
+    }
 }
 
 // 获取位置信息
 function getGSP() {
     var action = '获取位置信息';
 
-    hook('android.location.LocationManager', [
+    hook('android.location.LocationManager', filterItems('location', [
         {'methodName': 'requestLocationUpdates', 'action': action, 'messages': action},
         {'methodName': 'getLastKnownLocation', 'action': action, 'messages': action},
         {'methodName': 'getBestProvider', 'action': action, 'messages': action},
@@ -406,9 +436,9 @@ function getGSP() {
         {'methodName': 'getProvider', 'action': action, 'messages': action},
         {'methodName': 'requestSingleUpdate', 'action': action, 'messages': action},
         {'methodName': 'getCurrentLocation', 'action': action, 'messages': action},
-    ]);
+    ]));
 
-    hook('android.location.Location', [
+    hook('android.location.Location', filterItems('location', [
         {'methodName': 'getAccuracy', 'action': action, 'messages': action},
         {'methodName': 'getAltitude', 'action': action, 'messages': action},
         {'methodName': 'getBearing', 'action': action, 'messages': action},
@@ -422,12 +452,12 @@ function getGSP() {
         {'methodName': 'getSpeedAccuracyMetersPerSecond', 'action': action, 'messages': action},
         {'methodName': 'getTime', 'action': action, 'messages': action},
         {'methodName': 'getVerticalAccuracyMeters', 'action': action, 'messages': action},
-    ]);
+    ]));
 
-    hook('android.location.Geocoder', [
+    hook('android.location.Geocoder', filterItems('location', [
         {'methodName': 'getFromLocation', 'action': action, 'messages': action},
         {'methodName': 'getFromLocationName', 'action': action, 'messages': action},
-    ]);
+    ]));
 
 }
 
@@ -435,17 +465,17 @@ function getGSP() {
 function getCamera() {
     var action = '调用摄像头';
 
-    hook('android.hardware.Camera', [
+    hook('android.hardware.Camera', filterItems('camera', [
         {'methodName': 'open', 'action': action, 'messages': action},
-    ]);
+    ]));
 
-    hook('android.hardware.camera2.CameraManager', [
+    hook('android.hardware.camera2.CameraManager', filterItems('camera', [
         {'methodName': 'openCamera', 'action': action, 'messages': action},
-    ]);
+    ]));
 
-    hook('androidx.camera.core.ImageCapture', [
+    hook('androidx.camera.core.ImageCapture', filterItems('camera', [
         {'methodName': 'takePicture', 'action': action, 'messages': '调用摄像头拍照'},
-    ]);
+    ]));
 
 }
 
@@ -453,75 +483,77 @@ function getCamera() {
 function getNetwork() {
     var action = '获取网络信息';
 
-    hook('android.net.wifi.WifiInfo', [
+    hook('android.net.wifi.WifiInfo', filterItems('network', [
         {'methodName': 'getMacAddress', 'action': action, 'messages': '获取Mac地址'},
         {'methodName': 'getSSID', 'action': action, 'messages': '获取wifi SSID'},
         {'methodName': 'getBSSID', 'action': action, 'messages': '获取wifi BSSID'},
-    ]);
+    ]));
 
-    hook('android.net.wifi.WifiManager', [
+    hook('android.net.wifi.WifiManager', filterItems('network', [
         {'methodName': 'getConnectionInfo', 'action': action, 'messages': '获取wifi信息'},
         {'methodName': 'getConfiguredNetworks', 'action': action, 'messages': '获取wifi信息'},
         {'methodName': 'getScanResults', 'action': action, 'messages': '获取wifi信息'},
         {'methodName': 'getWifiState', 'action': action, 'messages': '获取wifi状态信息'},
-    ]);
+    ]));
 
-    hook('java.net.InetAddress', [
+    hook('java.net.InetAddress', filterItems('network', [
         {'methodName': 'getHostAddress', 'action': action, 'messages': '获取IP地址'},
         {'methodName': 'getAddress', 'action': action, 'messages': '获取网络address信息'},
         {'methodName': 'getHostName', 'action': action, 'messages': '获取网络hostname信息'},
-    ]);
+    ]));
 
-    hook('java.net.Inet4Address', [
+    hook('java.net.Inet4Address', filterItems('network', [
         {'methodName': 'getHostAddress', 'action': action, 'messages': '获取IP地址'},
-    ]);
+    ]));
 
-    hook('java.net.Inet6Address', [
+    hook('java.net.Inet6Address', filterItems('network', [
         {'methodName': 'getHostAddress', 'action': action, 'messages': '获取IP地址'},
-    ]);
+    ]));
 
-    hook('java.net.NetworkInterface', [
+    hook('java.net.NetworkInterface', filterItems('network', [
         {'methodName': 'getHardwareAddress', 'action': action, 'messages': '获取Mac地址'},
         {'methodName': 'getNetworkInterfaces', 'action': action, 'messages': '获取网络接口列表'},
-    ]);
+    ]));
 
-    hook('android.net.NetworkInfo', [
+    hook('android.net.NetworkInfo', filterItems('network', [
         {'methodName': 'getType', 'action': action, 'messages': '获取网络类型'},
         {'methodName': 'getTypeName', 'action': action, 'messages': '获取网络类型名称'},
         {'methodName': 'getExtraInfo', 'action': action, 'messages': '获取网络名称'},
         {'methodName': 'isAvailable', 'action': action, 'messages': '获取网络是否可用'},
         {'methodName': 'isConnected', 'action': action, 'messages': '获取网络是否连接'},
-    ]);
+    ]));
 
-    hook('android.net.ConnectivityManager', [
+    hook('android.net.ConnectivityManager', filterItems('network', [
         {'methodName': 'getActiveNetworkInfo', 'action': action, 'messages': '获取网络状态信息'},
         {'methodName': 'getNetworkCapabilities', 'action': action, 'messages': '获取网络能力信息'},
         {'methodName': 'getNetworkInfo', 'action': action, 'messages': '获取网络信息'},
-    ]);
+    ]));
 
-    hook('java.net.InetSocketAddress', [
+    hook('java.net.InetSocketAddress', filterItems('network', [
         {'methodName': 'getHostAddress', 'action': action, 'messages': '获取网络hostaddress信息'},
         {'methodName': 'getAddress', 'action': action, 'messages': '获取网络address信息'},
         {'methodName': 'getHostName', 'action': action, 'messages': '获取网络hostname信息'},
-    ]);
+    ]));
 
     // ip地址
-    try {
-        var _WifiInfo = Java.use('android.net.wifi.WifiInfo');
-        //获取ip
-        _WifiInfo.getIpAddress.implementation = function () {
-            var temp = this.getIpAddress();
-            var _ip = new Array();
-            _ip[0] = (temp >>> 24) >>> 0;
-            _ip[1] = ((temp << 8) >>> 24) >>> 0;
-            _ip[2] = (temp << 16) >>> 24;
-            _ip[3] = (temp << 24) >>> 24;
-            var _str = String(_ip[3]) + "." + String(_ip[2]) + "." + String(_ip[1]) + "." + String(_ip[0]);
-            alertSend(action, '获取IP地址：' + _str, '');
-            return temp;
+    if (isItemEnabled('network', 'getIpAddress')) {
+        try {
+            var _WifiInfo = Java.use('android.net.wifi.WifiInfo');
+            //获取ip
+            _WifiInfo.getIpAddress.implementation = function () {
+                var temp = this.getIpAddress();
+                var _ip = new Array();
+                _ip[0] = (temp >>> 24) >>> 0;
+                _ip[1] = ((temp << 8) >>> 24) >>> 0;
+                _ip[2] = (temp << 16) >>> 24;
+                _ip[3] = (temp << 24) >>> 24;
+                var _str = String(_ip[3]) + "." + String(_ip[2]) + "." + String(_ip[1]) + "." + String(_ip[0]);
+                alertSend(action, '获取IP地址：' + _str, '');
+                return temp;
+            }
+        } catch (e) {
+            console.log(e)
         }
-    } catch (e) {
-        console.log(e)
     }
 }
 
@@ -529,49 +561,49 @@ function getNetwork() {
 function getBluetooth() {
     var action = '获取蓝牙设备信息';
 
-    hook('android.bluetooth.BluetoothDevice', [
+    hook('android.bluetooth.BluetoothDevice', filterItems('bluetooth', [
         {'methodName': 'getName', 'action': action, 'messages': '获取蓝牙设备名称'},
         {'methodName': 'getAddress', 'action': action, 'messages': '获取蓝牙设备mac'},
-    ]);
+    ]));
 
-    hook('android.bluetooth.BluetoothAdapter', [
+    hook('android.bluetooth.BluetoothAdapter', filterItems('bluetooth', [
         {'methodName': 'getName', 'action': action, 'messages': '获取蓝牙设备名称'}
-    ]);
+    ]));
 }
 
 //读写文件
 function getFileMessage() {
     var action = '文件操作';
 
-    hook('java.io.RandomAccessFile', [
+    hook('java.io.RandomAccessFile', filterItems('file', [
         {'methodName': '$init', 'action': action, 'messages': 'RandomAccessFile写文件'}
-    ]);
-    hook('java.io.File', [
+    ]));
+    hook('java.io.File', filterItems('file', [
         {'methodName': 'mkdirs', 'action': action, 'messages': '尝试写入sdcard创建小米市场审核可能不通过'},
         {'methodName': 'mkdir', 'action': action, 'messages': '尝试写入sdcard创建小米市场审核可能不通过'}
-    ]);
+    ]));
 }
 
 //获取麦克风信息
 function getMedia() {
     var action = '获取麦克风'
 
-    hook('android.media.MediaRecorder', [
+    hook('android.media.MediaRecorder', filterItems('media', [
         {'methodName': 'start', 'action': action, 'messages': '获取麦克风'},
-    ]);
-    hook('android.media.AudioRecord', [
+    ]));
+    hook('android.media.AudioRecord', filterItems('media', [
         {'methodName': 'startRecording', 'action': action, 'messages': '获取麦克风'},
-    ]);
+    ]));
 }
 
 //获取传感器信息
 function getSensor() {
     var action = '获取传感器信息'
 
-    hook('android.hardware.SensorManager', [
+    hook('android.hardware.SensorManager', filterItems('sensor', [
         {'methodName': 'getDefaultSensor', 'action': action, 'messages': '获取默认传感器'},
         {'methodName': 'registerListener', 'action': action, 'messages': '注册传感器监听'},
-    ]);
+    ]));
 
 }
 
@@ -657,6 +689,7 @@ function main() {
             var moduleList;
             recv(function (received_json_object) {
                 moduleList = received_json_object.use_module;
+                moduleConfig = received_json_object.module_config || null;
             }).wait();
             useModule(moduleList);
         });

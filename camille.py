@@ -7,6 +7,7 @@ import argparse
 import random
 import signal
 import frida
+import json
 import time
 import sys
 import os
@@ -63,7 +64,7 @@ def show_banner():
 
 def frida_hook(device_info, app_name, use_module,
                wait_time=0, is_show=True, execl_file=None, isattach=False, external_script=None,
-               initial_scenario='同意隐私政策前'):
+               initial_scenario='同意隐私政策前', module_config=None):
     """
     :param app_name: 包名
     :param use_module 使用哪些模块
@@ -73,6 +74,7 @@ def frida_hook(device_info, app_name, use_module,
     :param isattach 使用attach hook
     :param external_script 加载外部脚本文件
     :param initial_scenario 初始场景标签
+    :param module_config 模块配置表(用于控制检测项是否加载)
 
     :return:
     """
@@ -120,7 +122,7 @@ def frida_hook(device_info, app_name, use_module,
             if data['type'] == "isHook":
                 global isHook
                 isHook = True
-                script.post({"use_module": use_module})
+                script.post({"use_module": use_module, "module_config": module_config})
             if data['type'] == "noFoundModule":
                 print_msg('输入 {} 模块错误，请检查'.format(data['data']))
             if data['type'] == "loadModule":
@@ -271,6 +273,8 @@ if __name__ == '__main__':
                         help="connect to remote frida-server on HOST,ex:127.0.0.1:1234")
     parser.add_argument("--external-script", "-es", required=False,
                         help="load external frida script js, default: ./script.js")
+    parser.add_argument("--module-config", "-mc", metavar="<path>", required=False,
+                        help="load module config json to control which detection items are enabled, default: utlis/modules.json (all enabled)")
 
     args = parser.parse_args()
     # 全局变量
@@ -286,7 +290,19 @@ if __name__ == '__main__':
     frida_device = get_frida_device(args.serial, args.host)
     initial_scenario = '同意隐私政策后' if args.noprivacypolicy or args.isattach else '同意隐私政策前'
 
+    module_config = None
+    if args.module_config:
+        config_path = args.module_config
+        if not os.path.isabs(config_path):
+            config_path = os.path.join(os.getcwd(), config_path)
+        if os.path.isfile(config_path):
+            with open(config_path, encoding='utf-8') as f:
+                module_config = json.load(f)
+            print_msg('已加载模块配置: {}'.format(config_path))
+        else:
+            print_msg('模块配置文件不存在: {}'.format(config_path))
+
     process = int(args.package) if args.package.isdigit() else args.package
     frida_hook(frida_device, process, use_module,
                args.time, args.noshow, args.file, args.isattach, args.external_script,
-               initial_scenario)
+               initial_scenario, module_config)

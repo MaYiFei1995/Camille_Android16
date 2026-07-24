@@ -5,6 +5,7 @@
 * [延迟hook](#延迟hook)
 * [使用attach hook](#使用attach)
 * [选择Hook模块](#选择Hook模块)
+* [模块配置](#模块配置)
 * [指定设备](#指定设备)
 * [自定义hook接口](#自定义hook接口)
 * [场景控制](#场景控制)
@@ -82,6 +83,68 @@ python camille.py com.zhengjim.myapplication -t 3
 |custom| 用户自定义接口|
 
 - -nu：跳过扫描指定模块。与命令`-u`互斥。多个模块用','隔开。例如：phone,permission 模块列表同上
+
+# 模块配置
+
+> 本节由 AI 辅助生成（模块配置系统，支持检测项级别的启用/禁用控制）。
+
+`-u`/`-nu` 只能控制模块级别的加载。如需更细粒度地控制具体检测项，可使用 `-mc`/`--module-config` 参数加载模块配置表。
+
+## 配置表说明
+
+项目内置默认配置 `utlis/modules.json`，包含全部 11 个模块及其所有检测项，默认全部启用。结构如下：
+
+```json
+{
+  "phone": {
+    "description": "获取电话相关信息",
+    "items": {
+      "getDeviceId": {"enabled": true, "description": "获取IMEI(Android 8.0)"},
+      "getImei": {"enabled": true, "description": "获取IMEI(Android 8.1+)"},
+      ...
+    }
+  },
+  ...
+}
+```
+
+- **模块级别禁用**：在模块对象上设置 `"enabled": false` 可禁用整个模块
+- **检测项级别禁用**：在具体 item 上设置 `"enabled": false` 可禁用单个检测项
+- 不在配置表中的模块或检测项默认启用
+
+## 使用方法
+
+1. 复制默认配置并修改：
+
+```bash
+cp utlis/modules.json my_config.json
+```
+
+2. 编辑 `my_config.json`，将不需要检测的项设为 `"enabled": false`，例如禁用传感器模块和剪贴板检测：
+
+```json
+{
+  "sensor": {
+    "enabled": false
+  },
+  "system": {
+    "items": {
+      "getPrimaryClip": {"enabled": false, "description": "读取剪切板信息"},
+      "setPrimaryClip": {"enabled": false, "description": "写入剪切板信息"}
+    }
+  }
+}
+```
+
+> 配置表只需包含需要修改的部分，未列出的模块/检测项保持默认启用。
+
+3. 启动时指定配置表：
+
+```
+python camille.py com.zhengjim.myapplication -mc my_config.json
+```
+
+`-mc` 与 `-u`/`-nu` 可组合使用：`-u`/`-nu` 控制模块级别加载，`-mc` 在已加载模块内进一步控制检测项级别。
 
 # 指定设备
 
@@ -216,7 +279,7 @@ frida-compile agent/index.ts -o ../script_compiled.js -c
 目前仅在 Windows 下测试过，其他平台请自行测试能否正常使用~
 
 ```shell
-pyinstaller -F .\camille.py -p .\venv\Lib\site-packages\ -i .\images\icon.ico --add-data "script_compiled.js;." --add-data "script.js;." --add-data "utlis\sdk.json;.\utlis"
+pyinstaller -F .\camille.py -p .\venv\Lib\site-packages\ -i .\images\icon.ico --add-data "script_compiled.js;." --add-data "script.js;." --add-data "utlis\sdk.json;.\utlis" --add-data "utlis\modules.json;.\utlis"
 ```
 
 > 注意：打包时务必包含 `script_compiled.js`，否则在 frida 17.x 环境下会因缺少 Java bridge 而报错。（此行及上方命令的 `script_compiled.js` 参数为 AI 辅助新增）

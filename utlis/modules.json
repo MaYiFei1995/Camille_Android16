@@ -1,0 +1,164 @@
+{
+  "permission": {
+    "description": "申请权限",
+    "items": {
+      "requestPermissions": {"enabled": true, "description": "申请具体权限看参数1"}
+    }
+  },
+  "phone": {
+    "description": "获取电话相关信息",
+    "items": {
+      "getDeviceId": {"enabled": true, "description": "获取IMEI(Android 8.0)"},
+      "getImei": {"enabled": true, "description": "获取IMEI(Android 8.1+)"},
+      "getMeid": {"enabled": true, "description": "获取MEID"},
+      "getNai": {"enabled": true, "description": "获取NAI"},
+      "getLine1Number": {"enabled": true, "description": "获取电话号码标识符"},
+      "getSimSerialNumber": {"enabled": true, "description": "获取IMSI/iccid"},
+      "getSubscriberId": {"enabled": true, "description": "获取IMSI"},
+      "getSimOperator": {"enabled": true, "description": "获取MCC/MNC"},
+      "getNetworkOperator": {"enabled": true, "description": "获取MCC/MNC"},
+      "getProvidersName": {"enabled": true, "description": "获取运营商名称"},
+      "getNetworkOperatorName": {"enabled": true, "description": "获取网络运营商名称"},
+      "getSimOperatorName": {"enabled": true, "description": "获取SIM运营商名称"},
+      "getSimCountryIso": {"enabled": true, "description": "获取SIM卡国家代码"},
+      "getCellLocation": {"enabled": true, "description": "获取电话当前位置信息"},
+      "getAllCellInfo": {"enabled": true, "description": "获取电话当前位置信息"},
+      "requestCellInfoUpdate": {"enabled": true, "description": "获取基站信息"},
+      "getServiceState": {"enabled": true, "description": "获取sim卡是否可用"},
+      "getBaseStationId": {"enabled": true, "description": "获取基站cid信息(CDMA)"},
+      "getNetworkId": {"enabled": true, "description": "获取基站lac信息(CDMA)"},
+      "getCid": {"enabled": true, "description": "获取基站cid信息(GSM)"},
+      "getLac": {"enabled": true, "description": "获取基站lac信息(GSM)"},
+      "sendTextMessageInternal": {"enabled": true, "description": "获取短信信息-发送短信"},
+      "getDefault": {"enabled": true, "description": "获取短信信息-发送短信"},
+      "sendTextMessageWithSelfPermissions": {"enabled": true, "description": "获取短信信息-发送短信"},
+      "sendMultipartTextMessageInternal": {"enabled": true, "description": "获取短信信息-发送短信"},
+      "sendDataMessage": {"enabled": true, "description": "获取短信信息-发送短信"},
+      "sendDataMessageWithSelfPermissions": {"enabled": true, "description": "获取短信信息-发送短信"}
+    }
+  },
+  "system": {
+    "description": "获取系统信息(AndroidId/标识/content敏感信息)",
+    "items": {
+      "getString": {"enabled": true, "description": "获取安卓ID(Settings.Secure/System)"},
+      "getSerial": {"enabled": true, "description": "获取设备序列号"},
+      "getWifiMacAddress": {"enabled": true, "description": "获取mac地址(DevicePolicyManager)"},
+      "getPrimaryClip": {"enabled": true, "description": "读取剪切板信息"},
+      "setPrimaryClip": {"enabled": true, "description": "写入剪切板信息"},
+      "getIccId": {"enabled": true, "description": "读取手机IccId信息"},
+      "getUDID": {"enabled": true, "description": "读取小米手机UDID"},
+      "getOAID": {"enabled": true, "description": "读取OAID(小米/三星/MSA SDK)"},
+      "getVAID": {"enabled": true, "description": "读取VAID(小米/三星/MSA SDK)"},
+      "getAAID": {"enabled": true, "description": "读取AAID(小米/三星/MSA SDK)"},
+      "InitSdk": {"enabled": true, "description": "初始化MSA SDK获取OAID"},
+      "getPropertyByteArray": {"enabled": true, "description": "获取DRM设备唯一ID"},
+      "getId": {"enabled": true, "description": "获取Google广告ID(GAID)"},
+      "getAccounts": {"enabled": true, "description": "获取账户列表"},
+      "getAccountsByType": {"enabled": true, "description": "获取指定类型账户"},
+      "query": {"enabled": true, "description": "获取content敏感信息(通讯录/日历/浏览器/相册)"}
+    }
+  },
+  "app": {
+    "description": "获取其他app信息",
+    "items": {
+      "getInstalledPackages": {"enabled": true, "description": "APP获取了其他app信息"},
+      "getInstalledApplications": {"enabled": true, "description": "APP获取了其他app信息"},
+      "queryIntentActivities": {"enabled": true, "description": "APP获取了其他app信息"},
+      "getRunningAppProcesses": {"enabled": true, "description": "获取了正在运行的App"},
+      "getRunningServiceControlPanel": {"enabled": true, "description": "获取了正在运行的服务面板"},
+      "getApplicationInfo": {"enabled": true, "description": "获取其他app信息(排除自身)"},
+      "getPackageInfoAsUser": {"enabled": true, "description": "获取其他app信息(排除自身)"},
+      "getInstallerPackageName": {"enabled": true, "description": "获取其他app信息(排除自身)"}
+    }
+  },
+  "location": {
+    "description": "获取位置信息",
+    "items": {
+      "requestLocationUpdates": {"enabled": true, "description": "获取位置信息"},
+      "getLastKnownLocation": {"enabled": true, "description": "获取位置信息"},
+      "getBestProvider": {"enabled": true, "description": "获取位置信息"},
+      "getGnssHardwareModelName": {"enabled": true, "description": "获取位置信息"},
+      "getGnssYearOfHardware": {"enabled": true, "description": "获取位置信息"},
+      "getProvider": {"enabled": true, "description": "获取位置信息(LocationManager/Location)"},
+      "requestSingleUpdate": {"enabled": true, "description": "获取位置信息"},
+      "getCurrentLocation": {"enabled": true, "description": "获取位置信息"},
+      "getAccuracy": {"enabled": true, "description": "获取位置信息"},
+      "getAltitude": {"enabled": true, "description": "获取位置信息"},
+      "getBearing": {"enabled": true, "description": "获取位置信息"},
+      "getBearingAccuracyDegrees": {"enabled": true, "description": "获取位置信息"},
+      "getElapsedRealtimeNanos": {"enabled": true, "description": "获取位置信息"},
+      "getExtras": {"enabled": true, "description": "获取位置信息"},
+      "getLatitude": {"enabled": true, "description": "获取位置信息"},
+      "getLongitude": {"enabled": true, "description": "获取位置信息"},
+      "getSpeed": {"enabled": true, "description": "获取位置信息"},
+      "getSpeedAccuracyMetersPerSecond": {"enabled": true, "description": "获取位置信息"},
+      "getTime": {"enabled": true, "description": "获取位置信息"},
+      "getVerticalAccuracyMeters": {"enabled": true, "description": "获取位置信息"},
+      "getFromLocation": {"enabled": true, "description": "获取位置信息(地理编码)"},
+      "getFromLocationName": {"enabled": true, "description": "获取位置信息(地理编码)"}
+    }
+  },
+  "network": {
+    "description": "获取网络信息",
+    "items": {
+      "getMacAddress": {"enabled": true, "description": "获取Mac地址(WifiInfo)"},
+      "getSSID": {"enabled": true, "description": "获取wifi SSID"},
+      "getBSSID": {"enabled": true, "description": "获取wifi BSSID"},
+      "getConnectionInfo": {"enabled": true, "description": "获取wifi信息"},
+      "getConfiguredNetworks": {"enabled": true, "description": "获取wifi信息"},
+      "getScanResults": {"enabled": true, "description": "获取wifi信息"},
+      "getWifiState": {"enabled": true, "description": "获取wifi状态信息"},
+      "getHostAddress": {"enabled": true, "description": "获取IP地址(InetAddress/Inet4/6/InetSocketAddress)"},
+      "getAddress": {"enabled": true, "description": "获取网络address信息"},
+      "getHostName": {"enabled": true, "description": "获取网络hostname信息"},
+      "getHardwareAddress": {"enabled": true, "description": "获取Mac地址(NetworkInterface)"},
+      "getNetworkInterfaces": {"enabled": true, "description": "获取网络接口列表"},
+      "getType": {"enabled": true, "description": "获取网络类型"},
+      "getTypeName": {"enabled": true, "description": "获取网络类型名称"},
+      "getExtraInfo": {"enabled": true, "description": "获取网络名称"},
+      "isAvailable": {"enabled": true, "description": "获取网络是否可用"},
+      "isConnected": {"enabled": true, "description": "获取网络是否连接"},
+      "getActiveNetworkInfo": {"enabled": true, "description": "获取网络状态信息"},
+      "getNetworkCapabilities": {"enabled": true, "description": "获取网络能力信息"},
+      "getNetworkInfo": {"enabled": true, "description": "获取网络信息(ConnectivityManager)"},
+      "getIpAddress": {"enabled": true, "description": "获取IP地址(WifiInfo自定义hook)"}
+    }
+  },
+  "camera": {
+    "description": "调用摄像头",
+    "items": {
+      "open": {"enabled": true, "description": "调用摄像头(Camera)"},
+      "openCamera": {"enabled": true, "description": "调用摄像头(CameraManager)"},
+      "takePicture": {"enabled": true, "description": "调用摄像头拍照(ImageCapture)"}
+    }
+  },
+  "bluetooth": {
+    "description": "获取蓝牙设备信息",
+    "items": {
+      "getName": {"enabled": true, "description": "获取蓝牙设备名称(BluetoothDevice/Adapter)"},
+      "getAddress": {"enabled": true, "description": "获取蓝牙设备mac"}
+    }
+  },
+  "file": {
+    "description": "读写文件",
+    "items": {
+      "$init": {"enabled": true, "description": "RandomAccessFile写文件"},
+      "mkdirs": {"enabled": true, "description": "尝试写入sdcard创建目录"},
+      "mkdir": {"enabled": true, "description": "尝试写入sdcard创建目录"}
+    }
+  },
+  "media": {
+    "description": "获取麦克风",
+    "items": {
+      "start": {"enabled": true, "description": "获取麦克风(MediaRecorder)"},
+      "startRecording": {"enabled": true, "description": "获取麦克风(AudioRecord)"}
+    }
+  },
+  "sensor": {
+    "description": "获取传感器信息",
+    "items": {
+      "getDefaultSensor": {"enabled": true, "description": "获取默认传感器"},
+      "registerListener": {"enabled": true, "description": "注册传感器监听"}
+    }
+  }
+}

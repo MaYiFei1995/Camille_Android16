@@ -13,6 +13,7 @@ Android App隐私合规检测辅助工具
 - **脚本加载改进**：camille 自动优先加载 `script_compiled.js`，并通过 `recv('start')` 模式替代 `setTimeout`/`setImmediate` 控制启动时机。
 - **场景控制系统**：移除原屏幕截图/模拟点击机制，改为运行时键盘输入切换 5 个检测场景（同意隐私政策前/后、IDLE、初始化中、请求业务中），所有告警标注当前场景标签。
 - **检测项扩展**：补充 MSA SDK OAID、DRM 设备 ID、GAID、NAI、账户信息、传感器注册监听等检测项。
+- **模块配置系统**：新增 `utlis/modules.json` 配置表和 `-mc`/`--module-config` 参数，支持检测项级别的启用/禁用控制，与 `-u`/`-nu` 模块级控制正交组合。
 
 ## 简介
 
