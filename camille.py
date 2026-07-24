@@ -1,7 +1,5 @@
 from utlis import print_msg, write_xlsx, resource_path
-from utlis.simulate_click import SimulateClick
 from utlis.device import get_frida_device
-from multiprocessing import Process
 from sys import exit
 import multiprocessing
 import traceback
@@ -64,7 +62,8 @@ def show_banner():
 
 
 def frida_hook(device_info, app_name, use_module,
-               wait_time=0, is_show=True, execl_file=None, isattach=False, external_script=None):
+               wait_time=0, is_show=True, execl_file=None, isattach=False, external_script=None,
+               initial_scenario='同意隐私政策前'):
     """
     :param app_name: 包名
     :param use_module 使用哪些模块
@@ -73,9 +72,12 @@ def frida_hook(device_info, app_name, use_module,
     :param execl_file 导出文件
     :param isattach 使用attach hook
     :param external_script 加载外部脚本文件
+    :param initial_scenario 初始场景标签
 
     :return:
     """
+
+    state = {'scenario': initial_scenario}
 
     def my_message_handler(message, payload):
         """ 消息处理 """
@@ -101,7 +103,6 @@ def frida_hook(device_info, app_name, use_module,
                     print(stacks)
                     print("-------------------------------end----------------------------------")
                 if execl_file:
-                    global privacy_policy_status
                     global execl_data
                     execl_data.append({
                         'alert_time': alert_time,
@@ -110,7 +111,7 @@ def frida_hook(device_info, app_name, use_module,
                         'arg': arg,
                         'stacks': stacks,
                         'subject_type': subject_type,
-                        'privacy_policy_status': "同意隐私政策" + privacy_policy_status.value,
+                        'scenario': state['scenario'],
                     })
             if data['type'] == "app_name":
                 get_app_name = data['data']
@@ -169,17 +170,45 @@ def frida_hook(device_info, app_name, use_module,
         script.post({"type": "start"})
         time.sleep(2)
         if isHook:
-            def stop(signum, frame):
-                print_msg('You have stoped hook.')
+            scenario_commands = {
+                '1': ('拒绝隐私政策', '同意隐私政策前'),
+                '2': ('同意隐私政策', '同意隐私政策后'),
+                '3': ('开始初始化', '初始化中'),
+                '4': ('初始化结束', 'IDLE'),
+                '5': ('开始请求业务', '请求业务中'),
+                '6': ('结束请求业务', 'IDLE'),
+            }
+
+            def cleanup():
                 session.detach()
                 if execl_file:
                     global execl_data
                     write_xlsx(execl_data, execl_file)
+
+            def stop(signum, frame):
+                print_msg('You have stoped hook.')
+                cleanup()
                 exit()
 
             signal.signal(signal.SIGINT, stop)
             signal.signal(signal.SIGTERM, stop)
-            sys.stdin.read()
+
+            while True:
+                print_msg('场景控制: [1]拒绝隐私 [2]同意隐私 [3]开始初始化 [4]初始化结束 [5]开始请求业务 [6]结束请求业务 [q]退出')
+                try:
+                    cmd = input('[*] 当前场景: {} > '.format(state['scenario'])).strip()
+                except EOFError:
+                    break
+                if cmd == 'q':
+                    print_msg('You have stoped hook.')
+                    cleanup()
+                    break
+                elif cmd in scenario_commands:
+                    action_name, new_scenario = scenario_commands[cmd]
+                    state['scenario'] = new_scenario
+                    print_msg('{} -> 场景: {}'.format(action_name, new_scenario))
+                elif cmd:
+                    print_msg('未知命令: {}'.format(cmd))
         else:
             print_msg("hook fail, try delaying hook, adjusting delay time")
     except frida.NotSupportedError as e:
@@ -213,35 +242,9 @@ def frida_hook(device_info, app_name, use_module,
         exit()
 
 
-def agree_privacy(privacy_policy_status, device_id):
-    try:
-        # 等待应用启动
-        time.sleep(5)
-        screen_save_path = '/data/local/tmp'
-        sc = SimulateClick(device_id, screen_save_path, 'screen.png')
-        screencap_result = sc.run()
-        if screencap_result:
-            result = sc.get_result()
-            while result == 1:
-                sc = SimulateClick(device_id, screen_save_path, 'screen.png')
-                sc.run()
-                result = sc.get_result()
-            if result == 2:
-                privacy_policy_status.value = '后'
-    except KeyboardInterrupt:
-        pass
-
-
 if __name__ == '__main__':
     # 下面这句必须在if下面添加
     multiprocessing.freeze_support()
-
-    # 这里要移除上一次生成的，否则报错了会用上一次的截屏结果进行显示
-    last_screen_shot = os.path.join(os.getcwd(), "screen.png")
-    if not os.path.isfile(last_screen_shot):
-        last_screen_shot = resource_path("screen.png")
-    if os.path.isfile(last_screen_shot):
-        os.remove(last_screen_shot)
 
     show_banner()
 
@@ -281,17 +284,9 @@ if __name__ == '__main__':
         use_module = {"type": "nouse", "data": args.nouse}
 
     frida_device = get_frida_device(args.serial, args.host)
-    # attach模式不调用同意隐私协议
-    if args.noprivacypolicy or args.isattach:
-        privacy_policy_status = multiprocessing.Value('u', '后')
-        agree_privacy_process = None
-    else:
-        privacy_policy_status = multiprocessing.Value('u', '前')
-        did = frida_device['did'] if frida_device['did'] else frida_device["device"].id
-        agree_privacy_process = Process(target=agree_privacy, args=(privacy_policy_status, did))
-        agree_privacy_process.daemon = True
-        agree_privacy_process.start()
+    initial_scenario = '同意隐私政策后' if args.noprivacypolicy or args.isattach else '同意隐私政策前'
 
     process = int(args.package) if args.package.isdigit() else args.package
     frida_hook(frida_device, process, use_module,
-               args.time, args.noshow, args.file, args.isattach, args.external_script)
+               args.time, args.noshow, args.file, args.isattach, args.external_script,
+               initial_scenario)

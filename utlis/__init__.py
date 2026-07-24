@@ -41,7 +41,7 @@ def write_xlsx(data, file_name):
     alignment.vert = xlwt.Alignment.VERT_CENTER
     title_style.alignment = alignment
     # 标题
-    worksheet.write(0, 0, '隐私政策状态', title_style)
+    worksheet.write(0, 0, '场景', title_style)
     worksheet.col(0).width = 20 * 300
     worksheet.write(0, 1, '时间点', title_style)
     worksheet.col(1).width = 20 * 300
@@ -66,7 +66,7 @@ def write_xlsx(data, file_name):
     content_style.alignment.wrap = 1
     for i, ed in enumerate(data):
         index_row = i + 1
-        worksheet.write(index_row, 0, ed['privacy_policy_status'], content_style)
+        worksheet.write(index_row, 0, ed['scenario'], content_style)
         worksheet.write(index_row, 1, ed['alert_time'], content_style)
         worksheet.write(index_row, 2, ed['subject_type'], content_style)
         worksheet.write(index_row, 3, ed['action'], content_style)

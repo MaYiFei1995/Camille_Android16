@@ -11,6 +11,8 @@ Android App隐私合规检测辅助工具
 - **stripped libart.so 符号查找**：Android 16 libart.so 已 strip `.symtab`，改用 `enumerateSymbols()` 解析 `.gnu_debugdata` mini-debuginfo 中的符号。
 - **JIT 编译竞争规避指引**：文档记录了 frida 修改 ArtMethod 后 JIT 线程可能崩溃的竞争窗口及临时关闭 JIT 的方法。
 - **脚本加载改进**：camille 自动优先加载 `script_compiled.js`，并通过 `recv('start')` 模式替代 `setTimeout`/`setImmediate` 控制启动时机。
+- **场景控制系统**：移除原屏幕截图/模拟点击机制，改为运行时键盘输入切换 5 个检测场景（同意隐私政策前/后、IDLE、初始化中、请求业务中），所有告警标注当前场景标签。
+- **检测项扩展**：补充 MSA SDK OAID、DRM 设备 ID、GAID、NAI、账户信息、传感器注册监听等检测项。
 
 ## 简介
 
