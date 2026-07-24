@@ -7,3 +7,4 @@ screen.png
 node_modules
 build
 dist
+.local/

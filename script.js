@@ -198,11 +198,15 @@ function getPhoneState() {
         {'methodName': 'getImei', 'action': action, 'messages': '获取IMEI'},
 
         {'methodName': 'getMeid', 'action': action, 'messages': '获取MEID'},
+        {'methodName': 'getNai', 'action': action, 'messages': '获取NAI'},
         {'methodName': 'getLine1Number', 'action': action, 'messages': '获取电话号码标识符'},
         {'methodName': 'getSimSerialNumber', 'action': action, 'messages': '获取IMSI/iccid'},
         {'methodName': 'getSubscriberId', 'action': action, 'messages': '获取IMSI'},
         {'methodName': 'getSimOperator', 'action': action, 'messages': '获取MCC/MNC'},
         {'methodName': 'getNetworkOperator', 'action': action, 'messages': '获取MCC/MNC'},
+        {'methodName': 'getProvidersName', 'action': action, 'messages': '获取运营商名称'},
+        {'methodName': 'getNetworkOperatorName', 'action': action, 'messages': '获取网络运营商名称'},
+        {'methodName': 'getSimOperatorName', 'action': action, 'messages': '获取SIM运营商名称'},
         {'methodName': 'getSimCountryIso', 'action': action, 'messages': '获取SIM卡国家代码'},
 
         {'methodName': 'getCellLocation', 'action': action, 'messages': '获取电话当前位置信息'},
@@ -283,6 +287,32 @@ function getSystemData() {
         {'methodName': 'getOAID', 'action': action, 'messages': '读取三星手机OAID'},
         {'methodName': 'getVAID', 'action': action, 'messages': '读取三星手机VAID'},
         {'methodName': 'getAAID', 'action': action, 'messages': '读取三星手机AAID'},
+    ]);
+
+    // MSA SDK (移动安全联盟)
+    hook('com.bun.miitmdid.core.MdidSdkHelper', [
+        {'methodName': 'InitSdk', 'action': action, 'messages': '初始化MSA SDK获取OAID'},
+    ]);
+    hook('com.bun.miitmdid.interfaces.IdSupplier', [
+        {'methodName': 'getOAID', 'action': action, 'messages': '获取OAID(MSA SDK)'},
+        {'methodName': 'getVAID', 'action': action, 'messages': '获取VAID(MSA SDK)'},
+        {'methodName': 'getAAID', 'action': action, 'messages': '获取AAID(MSA SDK)'},
+    ]);
+
+    // DRM设备唯一ID
+    hook('android.media.MediaDrm', [
+        {'methodName': 'getPropertyByteArray', 'args': ['device_unique_id'], 'action': action, 'messages': '获取DRM设备唯一ID'},
+    ]);
+
+    // GAID (Google Advertising ID)
+    hook('com.google.android.gms.ads.identifier.AdvertisingIdClient$Info', [
+        {'methodName': 'getId', 'action': action, 'messages': '获取Google广告ID(GAID)'},
+    ]);
+
+    // 账户信息
+    hook('android.accounts.AccountManager', [
+        {'methodName': 'getAccounts', 'action': action, 'messages': '获取账户列表'},
+        {'methodName': 'getAccountsByType', 'action': action, 'messages': '获取指定类型账户'},
     ]);
 
     //获取content敏感信息
@@ -451,7 +481,8 @@ function getNetwork() {
     ]);
 
     hook('java.net.NetworkInterface', [
-        {'methodName': 'getHardwareAddress', 'action': action, 'messages': '获取Mac地址'}
+        {'methodName': 'getHardwareAddress', 'action': action, 'messages': '获取Mac地址'},
+        {'methodName': 'getNetworkInterfaces', 'action': action, 'messages': '获取网络接口列表'},
     ]);
 
     hook('android.net.NetworkInfo', [
@@ -464,6 +495,8 @@ function getNetwork() {
 
     hook('android.net.ConnectivityManager', [
         {'methodName': 'getActiveNetworkInfo', 'action': action, 'messages': '获取网络状态信息'},
+        {'methodName': 'getNetworkCapabilities', 'action': action, 'messages': '获取网络能力信息'},
+        {'methodName': 'getNetworkInfo', 'action': action, 'messages': '获取网络信息'},
     ]);
 
     hook('java.net.InetSocketAddress', [
@@ -536,7 +569,8 @@ function getSensor() {
     var action = '获取传感器信息'
 
     hook('android.hardware.SensorManager', [
-        {'methodName': 'getSensorList', 'action': action, 'messages': '获取传感器信息'},
+        {'methodName': 'getDefaultSensor', 'action': action, 'messages': '获取默认传感器'},
+        {'methodName': 'registerListener', 'action': action, 'messages': '注册传感器监听'},
     ]);
 
 }
