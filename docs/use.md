@@ -8,7 +8,10 @@
 * [指定设备](#指定设备)
 * [自定义hook接口](#自定义hook接口)
 * [是否同意隐私政策](#是否同意隐私政策)
+* [跳过隐私政策检测](#跳过隐私政策检测)
+* [加载外部脚本](#加载外部脚本)
 * [指定Frida-sever](#指定Frida-sever)
+* [Frida 17.x 脚本编译](#frida-17x-脚本编译)
 * [PyInstaller 打包二进制可执行文件](#PyInstaller打包二进制可执行文件)
 
 # 使用：
@@ -150,14 +153,62 @@ python camille.py com.zhengjim.myapplication -H 127.0.0.1:30000
 
 ![img.png](../images/img11.png)
 
+# 跳过隐私政策检测
+
+> 本节及以下新增章节（加载外部脚本、Frida 17.x 脚本编译）由 AI 辅助生成。
+
+- -npp：跳过隐私协议检测
+
+不需要同意隐私协议流程，默认状态为已同意隐私合规后。适用于不需要检测隐私协议前后行为的场景，或目标应用没有隐私协议弹窗的情况。
+
+```
+python camille.py com.zhengjim.myapplication -npp
+```
+
+> 注意：使用 `-ia`（attach 模式）时也会自动跳过隐私协议检测。
+
+# 加载外部脚本
+
+- -es：加载外部 frida 脚本文件
+
+默认加载项目目录下的 `script_compiled.js`（如存在）或 `script.js`。可以通过 `-es` 指定自定义脚本路径，支持相对路径和绝对路径。
+
+```
+python camille.py com.zhengjim.myapplication -es /path/to/my_script.js
+```
+
+# Frida 17.x 脚本编译
+
+frida 17.x 起，Python API 不再自动包含 Java bridge。如果直接使用 `script.js`，会报 `ReferenceError: 'Java' is not defined`。
+
+项目内置了编译好的 `script_compiled.js`（通过 `frida-compile` 将 `frida-java-bridge` 打包进脚本），camille 启动时会自动优先加载该文件，**正常使用无需额外操作**。
+
+**修改 `script.js` 后需要重新编译：**
+
+1. 安装 Node.js 和 npm（如未安装）
+2. 进入 agent 目录安装依赖：
+```
+cd agent
+npm install
+```
+3. 编译脚本：
+```
+frida-compile agent/index.ts -o ../script_compiled.js -c
+```
+
+编译产物 `script_compiled.js` 包含了 `frida-java-bridge` 和 `script.js` 的全部逻辑，可直接被 camille 加载。
+
+> 如果未安装 `frida-compile`，可通过 `pip install frida-tools` 获取。
 
 # PyInstaller打包二进制可执行文件
 
 目前仅在 Windows 下测试过，其他平台请自行测试能否正常使用~
 
 ```shell
-pyinstaller -F .\camille.py -p .\venv\Lib\site-packages\ -i .\images\icon.ico --add-data "script.js;." --add-data "utlis\sdk.json;.\utlis"
+pyinstaller -F .\camille.py -p .\venv\Lib\site-packages\ -i .\images\icon.ico --add-data "script_compiled.js;." --add-data "script.js;." --add-data "utlis\sdk.json;.\utlis"
 ```
+
+> 注意：打包时务必包含 `script_compiled.js`，否则在 frida 17.x 环境下会因缺少 Java bridge 而报错。（此行及上方命令的 `script_compiled.js` 参数为 AI 辅助新增）
 
 **可能出现的问题：**
 

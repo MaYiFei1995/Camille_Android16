@@ -1,0 +1,73 @@
+--- a/lib/android.js	2026-07-23 21:49:41.097381400 +0800
++++ b/lib/android.js	2026-07-23 21:49:41.170381900 +0800
+@@ -2160,6 +2160,13 @@
+   ];
+   const api = getApi();
+   const art = api.module;
++  const { artNterpEntryPoint, artQuickToInterpreterBridge } = api;
++  const quickCodeOffset = getArtMethodSpec(api.vm).offset.quickCode;
++
++  const synchronizeReplacements = function () {
++    artController.replacedMethods.synchronize(quickCodeOffset, artNterpEntryPoint, artQuickToInterpreterBridge);
++  };
++
+   for (const [name, pattern] of patterns) {
+     const base = art.findSymbolByName(name);
+     if (base === null) {
+@@ -2168,17 +2175,50 @@
+ 
+     const matches = Memory.scanSync(base, 8192, pattern);
+     if (matches.length === 0) {
+-      return;
++      continue;
+     }
+ 
+-    const { artNterpEntryPoint, artQuickToInterpreterBridge } = api;
+-    const quickCodeOffset = getArtMethodSpec(api.vm).offset.quickCode;
+-    Interceptor.attach(matches[0].address, function () {
+-      artController.replacedMethods.synchronize(quickCodeOffset, artNterpEntryPoint, artQuickToInterpreterBridge);
+-    });
++    Interceptor.attach(matches[0].address, synchronizeReplacements);
+ 
+     return;
+   }
++
++  // Android 16 ART refactored this callback flow and older byte signatures no longer
++  // match reliably. Fall back to the callback methods that are still present.
++  if (getAndroidApiLevel() >= 36) {
++    const fallbackSymbols = [
++      '_ZN3art11ClassLinker26VisiblyInitializedCallback11MakeVisibleEPNS_6ThreadE',
++      '_ZN3art11ClassLinker26VisiblyInitializedCallback3RunEPNS_6ThreadE',
++      '_ZN3art11ClassLinker26VisiblyInitializedCallback22MarkVisiblyInitializedEPNS_6ThreadE'
++    ];
++
++    // Android 16 libart.so is stripped: .symtab is gone and these symbols only
++    // exist in the LZMA-compressed .gnu_debugdata mini-debuginfo, which
++    // findSymbolByName() does not parse but enumerateSymbols() does.
++    const symbolsByName = new Map();
++    for (const symbol of art.enumerateSymbols()) {
++      symbolsByName.set(symbol.name, symbol.address);
++    }
++
++    let hooked = false;
++    fallbackSymbols.forEach(name => {
++      let address = art.findSymbolByName(name);
++      if (address === null) {
++        const found = symbolsByName.get(name);
++        address = found !== undefined ? found : null;
++      }
++      if (address === null) {
++        return;
++      }
++
++      Interceptor.attach(address, synchronizeReplacements);
++      hooked = true;
++    });
++
++    if (hooked) {
++      return;
++    }
++  }
+ }
+ 
+ function ensureArtKnowsHowToHandleReplacementMethods (vm) {

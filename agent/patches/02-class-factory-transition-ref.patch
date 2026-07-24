@@ -1,0 +1,141 @@
+--- a/lib/class-factory.js	2026-07-23 21:49:41.088381100 +0800
++++ b/lib/class-factory.js	2026-07-23 21:49:41.184379900 +0800
+@@ -1867,6 +1867,65 @@
+   };
+ }
+ 
++let artHeapBase;
++
++function getArtHeapBase (env) {
++  if (artHeapBase !== undefined) {
++    return artHeapBase;
++  }
++  // DecodeGlobalJObject needs the shared mutator lock, which the NativeCallback
++  // thread does not hold in kNative state. Transition to Runnable for the decode.
++  try {
++    const api = android.getApi();
++    const classClass = env.findClass('java/lang/Class');
++    const gref = env.newGlobalRef(classClass);
++    try {
++      let raw = null;
++      android.withRunnableArtThread(vm, env, thread => {
++        raw = api['art::Thread::DecodeJObject'](thread, gref);
++      });
++      if (raw !== null && !raw.isNull()) {
++        const compressed = raw.readU32();
++        if (compressed !== 0) {
++          // java.lang.Class is its own class, so its first field (klass_) is a
++          // compressed reference to itself: base = raw - compressed.
++          const base = raw.sub(compressed);
++          if (base.compare(raw) < 0) {
++            artHeapBase = base;
++          }
++        }
++      }
++    } finally {
++      env.deleteGlobalRef(gref);
++    }
++  } catch (e) {
++  }
++  // Leave undefined on failure so the next call retries instead of caching null.
++  return artHeapBase;
++}
++
++function promoteTransitionRef (env, handle) {
++  const api = android.getApi();
++  if (api === null || api['art::JavaVMExt::AddGlobalRef'] === undefined) {
++    return null;
++  }
++  if (android.getAndroidApiLevel() < 34) {
++    return null;
++  }
++  const base = getArtHeapBase(env);
++  if (base === undefined || base === null) {
++    return null;
++  }
++  const compressed = handle.readU32();
++  if (compressed === 0) {
++    return NULL;
++  }
++  const thread = api['art::Thread::CurrentFromGdb']();
++  // AddGlobalRef only takes the globals lock (not the mutator lock), so it is
++  // safe from kNative state — this is exactly what JNI NewGlobalRef does.
++  return api['art::JavaVMExt::AddGlobalRef'](api.vm, thread, base.add(compressed));
++}
++
+ function handleMethodInvocation (jniArgs, params) {
+   const env = new Env(jniArgs[0], vm);
+ 
+@@ -1874,10 +1933,47 @@
+ 
+   const ownedObjects = [];
+ 
++  // Android 14+ delivers `this` and object arguments to native methods as JNI
++  // transition frame references (IndirectRefKind kJniTransition, low bits 00):
++  // pointers to compressed-reference slots in the caller's quick frame. On
++  // CheckJNI-enabled builds (e.g. userdebug) every validating JNI call
++  // (NewLocalRef, IsInstanceOf, CallNonvirtual*Method, ...) rejects them,
++  // because IsJniTransitionReference() cannot walk the managed stack through
++  // our trampoline frames. Decode the compressed reference from the slot and
++  // promote it to a real global reference via JavaVMExt::AddGlobalRef(),
++  // which performs no validation.
++  const numArgs = jniArgs.length - 2;
++  const promotedRefs = [];
++
++  const promote = (handle) => {
++    if (handle.isNull() || !handle.and(3).equals(NULL)) {
++      return handle;
++    }
++    const gref = promoteTransitionRef(env, handle);
++    if (gref === null) {
++      return handle;
++    }
++    if (!gref.isNull()) {
++      promotedRefs.push(gref);
++    }
++    return gref;
++  };
++
++  let selfHandle = jniArgs[1];
++  if (type === INSTANCE_METHOD) {
++    selfHandle = promote(selfHandle);
++  }
++
++  const safeArgs = new Array(numArgs);
++  for (let i = 0; i !== numArgs; i++) {
++    const rawArg = jniArgs[2 + i];
++    safeArgs[i] = argTypes[i].type === 'pointer' ? promote(rawArg) : rawArg;
++  }
++
+   let self;
+   if (type === INSTANCE_METHOD) {
+     const C = classWrapper.$C;
+-    self = new C(jniArgs[1], STRATEGY_VIRTUAL, env, false);
++    self = new C(selfHandle, STRATEGY_VIRTUAL, env, false);
+   } else {
+     self = classWrapper;
+   }
+@@ -1900,11 +1996,10 @@
+     }
+ 
+     const args = [];
+-    const numArgs = jniArgs.length - 2;
+     for (let i = 0; i !== numArgs; i++) {
+       const t = argTypes[i];
+ 
+-      const value = t.fromJni(jniArgs[2 + i], env, false);
++      const value = t.fromJni(safeArgs[i], env, false);
+       args.push(value);
+ 
+       ownedObjects.push(value);
+@@ -1954,6 +2049,10 @@
+         dispose.call(obj);
+       }
+     });
++
++    promotedRefs.forEach(ref => {
++      env.deleteGlobalRef(ref);
++    });
+   }
+ }
+ 

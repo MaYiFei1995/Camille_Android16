@@ -141,7 +141,11 @@ def frida_hook(device_info, app_name, use_module,
             else:
                 external_script = os.path.join(os.getcwd(), external_script)
         else:
-            external_script = os.path.join(os.getcwd(), 'script.js')
+            compiled_script = os.path.join(os.getcwd(), 'script_compiled.js')
+            if os.path.isfile(compiled_script):
+                external_script = compiled_script
+            else:
+                external_script = os.path.join(os.getcwd(), 'script.js')
         if os.path.isfile(external_script):
             script_path = external_script
         else:
@@ -154,10 +158,6 @@ def frida_hook(device_info, app_name, use_module,
                 exit()
         with open(script_path, encoding="utf-8") as f:
             script_read = f.read()
-        if wait_time:
-            script_read += "setTimeout(main, {0}000);\n".format(str(wait_time))
-        else:
-            script_read += "setImmediate(main);\n"
         script = session.create_script(script_read)
         script.on("message", my_message_handler)
         script.load()
@@ -166,6 +166,8 @@ def frida_hook(device_info, app_name, use_module,
             device.resume(pid)
         wait_time += 1
         time.sleep(wait_time)
+        script.post({"type": "start"})
+        time.sleep(2)
         if isHook:
             def stop(signum, frame):
                 print_msg('You have stoped hook.')
