@@ -14,6 +14,7 @@ Android App隐私合规检测辅助工具
 - **场景控制系统**：移除原屏幕截图/模拟点击机制，改为运行时键盘输入切换 5 个检测场景（同意隐私政策前/后、IDLE、初始化中、请求业务中），所有告警标注当前场景标签。
 - **检测项扩展**：补充 MSA SDK OAID、DRM 设备 ID、GAID、NAI、账户信息、传感器注册监听等检测项。
 - **模块配置系统**：新增 `utlis/modules.json` 配置表和 `-mc`/`--module-config` 参数，支持检测项级别的启用/禁用控制，与 `-u`/`-nu` 模块级控制正交组合。
+- **前台应用自动检测**：新增 `-FU`/`--front-most` 参数，自动获取设备当前前台运行应用，免手动输入包名或查 PID（类似 frida-dexdump 的 `-FU`）。
 
 > **致谢**：Frida 17.x 无 Java bridge 的修复方案参考了看雪论坛帖子 [关于Frida 17+版本Python API调用JS引发Bridge故障的解析](https://bbs.kanxue.com/thread-287941.htm)（作者：逆向小呆呆）。
 

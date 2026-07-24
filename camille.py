@@ -251,7 +251,7 @@ if __name__ == '__main__':
     show_banner()
 
     parser = argparse.ArgumentParser(description="App privacy compliance testing.")
-    parser.add_argument("package", help="APP_NAME or process ID ex: com.test.demo01 、12345")
+    parser.add_argument("package", nargs='?', help="APP_NAME or process ID ex: com.test.demo01 、12345")
     parser.add_argument("--time", "-t", default=0, type=int, help="Delayed hook, the number is in seconds ex: 5")
     parser.add_argument("--noshow", "-ns", required=False, action="store_const", default=True, const=False,
                         help="Showing the alert message")
@@ -260,6 +260,8 @@ if __name__ == '__main__':
                         help="use attach hook")
     parser.add_argument("--noprivacypolicy", "-npp", required=False, action="store_const", default=False, const=True,
                         help="close the privacy policy. after closing, default status is agree privacy policy")
+    parser.add_argument("-FU", "--front-most", required=False, action="store_true",
+                        help="use front-most running application, auto-resolve package name and pid")
 
     module_group = parser.add_mutually_exclusive_group()
     module_group.add_argument("--use", "-u", required=False,
@@ -302,7 +304,28 @@ if __name__ == '__main__':
         else:
             print_msg('模块配置文件不存在: {}'.format(config_path))
 
-    process = int(args.package) if args.package.isdigit() else args.package
+    if args.front_most:
+        front_app = frida_device["device"].get_frontmost_application()
+        if front_app is None:
+            print_msg('未找到前台应用，请确保设备上有应用在前台运行')
+            exit()
+        print_msg('前台应用: {} (identifier={}, pid={})'.format(
+            front_app.name, front_app.identifier, front_app.pid))
+        if args.isattach:
+            process = front_app.pid
+        else:
+            try:
+                frida_device["device"].kill(front_app.pid)
+                time.sleep(1)
+            except Exception:
+                pass
+            process = front_app.identifier
+    else:
+        if not args.package:
+            print_msg('请指定包名或使用 -FU 参数获取前台应用')
+            exit()
+        process = int(args.package) if args.package.isdigit() else args.package
+
     frida_hook(frida_device, process, use_module,
                args.time, args.noshow, args.file, args.isattach, args.external_script,
                initial_scenario, module_config)

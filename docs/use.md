@@ -4,6 +4,7 @@
 * [输出堆栈信息文件](#输出堆栈信息文件)
 * [延迟hook](#延迟hook)
 * [使用attach hook](#使用attach)
+* [前台应用](#前台应用)
 * [选择Hook模块](#选择Hook模块)
 * [模块配置](#模块配置)
 * [指定设备](#指定设备)
@@ -60,6 +61,36 @@ python camille.py com.zhengjim.myapplication -t 3
 找进程ID，进入安卓运行`ps -A | grep com.zhengjim.myapplication`
 
 ![img_6.png](../images/img6.png)
+
+# 前台应用
+
+> 本节由 AI 辅助生成（前台应用自动检测功能）。
+
+- -FU：自动获取当前前台运行的应用，无需手动输入包名或查 PID
+
+类似 frida-dexdump 的 `-FU` 参数，camille 会通过 `device.get_frontmost_application()` 自动获取设备当前前台应用，解析其包名和 PID。
+
+## 使用方法
+
+**Spawn 模式（默认）**：获取前台应用后，先 kill 已有进程，再重新 spawn 拉起，便于从启动阶段开始 hook：
+
+```
+python camille.py -FU
+```
+
+**Attach 模式**：直接 attach 到前台应用的已有进程，不重新拉起：
+
+```
+python camille.py -FU -ia
+```
+
+可与其他参数组合使用：
+
+```
+python camille.py -FU -mc my_config.json -f result.xls
+```
+
+> 注意：`-FU` 与位置参数 `package` 二选一，使用 `-FU` 时无需再提供包名。
 
 # 选择Hook模块
 
