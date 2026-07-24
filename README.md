@@ -15,6 +15,8 @@ Android App隐私合规检测辅助工具
 - **检测项扩展**：补充 MSA SDK OAID、DRM 设备 ID、GAID、NAI、账户信息、传感器注册监听等检测项。
 - **模块配置系统**：新增 `utlis/modules.json` 配置表和 `-mc`/`--module-config` 参数，支持检测项级别的启用/禁用控制，与 `-u`/`-nu` 模块级控制正交组合。
 
+> **致谢**：Frida 17.x 无 Java bridge 的修复方案参考了看雪论坛帖子 [关于Frida 17+版本Python API调用JS引发Bridge故障的解析](https://bbs.kanxue.com/thread-287941.htm)（作者：逆向小呆呆）。
+
 ## 简介
 
 现如今APP隐私合规十分重要，各监管部门不断开展APP专项治理工作及核查通报，不合规的APP通知整改或直接下架。camille可以hook住Android敏感接口，检测是否第三方SDK调用。根据隐私合规的场景，辅助检查是否符合隐私合规标准。
